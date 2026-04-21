@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>¡Feliz Cumpleaños Diana!</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root {
+  --purple: #7c3aed;
+  --purple-light: #a855f7;
+  --gold: #fbbf24;
+  --pink: #f472b6;
+  --cyan: #22d3ee;
+  --bg: #0a0015;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  background: var(--bg);
+  font-family: 'Press Start 2P', monospace;
+  color: white;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ══════════ LOADING SCREEN ══════════ */
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: max(env(safe-area-inset-top),20px) max(env(safe-area-inset-right),16px) max(env(safe-area-inset-bottom),20px) max(env(safe-area-inset-left),16px);
+  transition: opacity 0.7s ease, visibility 0.7s;
+}
+#loader.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+
+.load-boot {
+  text-align: center;
+  margin-bottom: 1.8rem;
+  line-height: 2.4;
+}
+.load-boot .l1 { font-size: clamp(0.55rem, 3.5vw, 0.9rem); color: var(--purple-light); letter-spacing: 3px; }
+.load-boot .l2 { font-size: clamp(0.45rem, 2.5vw, 0.7rem); color: var(--gold); letter-spacing: 2px; margin-top: 0.3rem; }
+.load-boot .l3 { font-size: clamp(0.35rem, 2vw, 0.5rem); color: var(--pink); letter-spacing: 2px; animation: blink 1.4s step-end infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Walking sprite container */
+.sprite-track {
+  width: min(240px, 70vw);
+  height: 56px;
+  border-bottom: 3px solid var(--purple);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 1.8rem;
+  background: rgba(124,58,237,0.06);
+}
+#spriteCanvas {
+  position: absolute;
+  bottom: 3px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+/* ground dots */
+.sprite-track::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--purple) 0, var(--purple) 6px, transparent 6px, transparent 12px);
+}
+
+/* Progress bar */
+.pbar-outer {
+  width: min(280px, 82vw);
+  border: 3px solid var(--purple-light);
+  padding: 3px;
+  margin-bottom: 0.6rem;
+}
+.pbar-fill {
+  height: 16px;
+  background: linear-gradient(90deg, var(--purple), var(--purple-light));
+  width: 0%;
+  transition: width 0.07s linear;
+  position: relative;
+}
+.pbar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0, rgba(255,255,255,0.18) 8px, transparent 8px, transparent 16px);
+}
+.pbar-pct {
+  font-size: clamp(0.35rem, 2vw, 0.5rem);
+  color: var(--gold);
+  text-align: right;
+  width: min(280px, 82vw);
+  margin-bottom: 1rem;
+}
+
+/* Log messages */
+.load-log {
+  width: min(280px, 82vw);
+  border: 2px solid #222;
+  background: #050010;
+  padding: 0.5rem 0.6rem;
+  font-size: clamp(0.28rem, 1.8vw, 0.4rem);
+  color: var(--cyan);
+  line-height: 2.2;
+  min-height: 3.5em;
+  letter-spacing: 1px;
+}
+.log-line { animation: fadein 0.3s ease; }
+@keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+.log-cursor { display: inline-block; animation: blink 0.7s step-end infinite; }
+
+.load-hearts {
+  margin-top: 1.8rem;
+  font-size: 1.1rem;
+  letter-spacing: 8px;
+  animation: hbeat 0.9s ease-in-out infinite alternate;
+}
+@keyframes hbeat { to { letter-spacing: 14px; opacity: 0.7; } }
+
+/* ══════════ MAIN PAGE ══════════ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(124,58,237,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,58,237,0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+.stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+.star { position: absolute; width: 4px; height: 4px; background: #fff; animation: twinkle 2s infinite alternate; }
+@keyframes twinkle { 0%{opacity:.15;transform:scale(1)} 100%{opacity:1;transform:scale(1.5)} }
+.conf-layer { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.conf { position: absolute; width: 8px; height: 8px; top: -20px; animation: fall linear infinite; }
+@keyframes fall { 0%{transform:translateY(0) rotate(0)} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+
+#main {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  padding:
+    max(env(safe-area-inset-top), 16px) max(env(safe-area-inset-right), 16px)
+    max(env(safe-area-inset-bottom), 40px) max(env(safe-area-inset-left), 16px);
+  padding-top: max(env(safe-area-inset-top), 24px);
+  padding-bottom: max(env(safe-area-inset-bottom), 48px);
+  opacity: 0;
+  transition: opacity 0.8s ease 0.1s;
+}
+#main.show { opacity: 1; }
+
+/* Header */
+.hdr { text-align: center; margin-bottom: 1.6rem; }
+.ttl {
+  font-size: clamp(0.9rem, 5.5vw, 1.5rem);
+  color: var(--gold);
+  text-shadow: 3px 3px 0 #7c3aed, 6px 6px 0 #2d0d70;
+  line-height: 1.9;
+  animation: pulse 1.3s ease-in-out infinite alternate;
+}
+@keyframes pulse { to { transform: scale(1.02); } }
+.sub {
+  font-size: clamp(0.36rem, 2.2vw, 0.58rem);
+  color: var(--purple-light);
+  margin-top: 0.6rem;
+  letter-spacing: 2px;
+  animation: blink 1.5s step-end infinite;
+}
+
+/* Cake */
+.cake-wrap { display: flex; justify-content: center; margin: 1rem 0; }
+#cakeCanvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+/* Marquee */
+.mq-wrap {
+  overflow: hidden;
+  border-top: 2px solid var(--purple);
+  border-bottom: 2px solid var(--purple);
+  padding: 0.4rem 0;
+  margin: 1rem 0;
+  background: rgba(124,58,237,0.07);
+}
+.mq {
+  white-space: nowrap;
+  display: inline-block;
+  animation: scroll 15s linear infinite;
+  font-size: clamp(0.28rem, 1.8vw, 0.4rem);
+  color: var(--purple-light);
+  letter-spacing: 3px;
+}
+@keyframes scroll { 0%{transform:translateX(100vw)} 100%{transform:translateX(-100%)} }
+
+/* Section label */
+.sec-lbl {
+  text-align: center;
+  font-size: clamp(0.3rem, 1.8vw, 0.46rem);
+  color: var(--cyan);
+  margin-bottom: 1rem;
+  letter-spacing: 3px;
+}
+
+/* Cards */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 500px) {
+  .grid { grid-template-columns: 1.15fr 1fr 1fr; align-items: start; }
+}
+
+.card {
+  border: 3px solid;
+  padding: 0.9rem 0.75rem;
+  position: relative;
+  text-align: center;
+  background: rgba(0,0,0,0.5);
+}
+.card.rm  { border-color: var(--gold); box-shadow: 5px 5px 0 rgba(251,191,36,.22); }
+.card.sg  { border-color: var(--cyan); box-shadow: 5px 5px 0 rgba(34,211,238,.15); }
+.card.jh  { border-color: var(--pink); box-shadow: 5px 5px 0 rgba(244,114,182,.15); }
+
+.card.rm::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 2px solid var(--gold);
+  animation: glow 1.8s ease-in-out infinite;
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes glow { 50%{opacity:.45} }
+
+/* mobile RM banner */
+@media (max-width: 499px) {
+  .card.rm { padding-top: 1.8rem; }
+  .card.rm::after {
+    content: '★  FAVORITO DE DIANA  ★';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    background: var(--gold);
+    color: #000;
+    font-size: 0.28rem;
+    letter-spacing: 2px;
+    padding: 4px;
+    text-align: center;
+  }
+}
+
+.crown { font-size: 1rem; display: block; margin-bottom: 0.2rem; animation: bounce .9s ease-in-out infinite alternate; }
+@keyframes bounce { to{transform:translateY(-5px)} }
+.cname { font-size: clamp(0.42rem, 2.2vw, 0.6rem); letter-spacing: 3px; margin-bottom: 0.12rem; }
+.card.rm .cname{color:var(--gold)} .card.sg .cname{color:var(--cyan)} .card.jh .cname{color:var(--pink)}
+.crname { font-size: clamp(0.26rem, 1.3vw, 0.34rem); color: #666; margin-bottom: 0.5rem; letter-spacing: 1px; }
+.pixel-char { margin: 0.5rem auto; display: block; image-rendering: pixelated; }
+.badge {
+  display: inline-block;
+  background: var(--gold);
+  color: #000;
+  font-size: clamp(0.22rem, 1.2vw, 0.3rem);
+  padding: 2px 6px;
+  margin-top: 0.3rem;
+  animation: badgepulse 1s step-end infinite;
+}
+@keyframes badgepulse { 50%{background:#fff4b0} }
+.cmsg {
+  font-size: clamp(0.26rem, 1.5vw, 0.34rem);
+  line-height: 2.4;
+  color: #bbb;
+  margin-top: 0.6rem;
+  border-top: 2px solid;
+  padding-top: 0.6rem;
+}
+.card.rm .cmsg{border-color:var(--gold);color:#ffe38a}
+.card.sg .cmsg{border-color:var(--cyan)}
+.card.jh .cmsg{border-color:var(--pink)}
+.ctag {
+  display: inline-block;
+  font-size: clamp(0.2rem, 1.1vw, 0.28rem);
+  padding: 2px 5px;
+  margin-top: 0.4rem;
+  letter-spacing: 1px;
+}
+.card.rm .ctag{background:var(--gold);color:#000}
+.card.sg .ctag{background:var(--cyan);color:#000}
+.card.jh .ctag{background:var(--pink);color:#000}
+
+/* Banner */
+.banner {
+  text-align: center;
+  margin: 1.8rem 0;
+  padding: 1rem 0.8rem;
+  border: 3px solid var(--purple-light);
+  background: rgba(124,58,237,0.09);
+}
+.banner-txt {
+  font-size: clamp(0.3rem, 2vw, 0.52rem);
+  color: var(--purple-light);
+  line-height: 2.8;
+}
+
+/* Hearts */
+.hearts { text-align: center; font-size: 1rem; margin: 1rem 0; animation: hbeat2 1s ease-in-out infinite alternate; }
+@keyframes hbeat2 { to{letter-spacing:14px} }
+
+/* Footer */
+.footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: clamp(0.2rem, 1.1vw, 0.28rem);
+  color: #3a3a3a;
+  letter-spacing: 2px;
+  line-height: 2.8;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     LOADING SCREEN
+══════════════════════════════ -->
+<div id="loader">
+  <div class="load-boot">
+    <div class="l1">BTS RAP LINE OS</div>
+    <div class="l2">★  DIANA EDITION  ★</div>
+    <div class="l3">&gt; BIRTHDAY MODULE v2.0 &lt;</div>
+  </div>
+
+  <div class="sprite-track">
+    <canvas id="spriteCanvas" width="28" height="40"></canvas>
+  </div>
+
+  <div class="pbar-outer">
+    <div class="pbar-fill" id="pbar"></div>
+  </div>
+  <div class="pbar-pct" id="pct">0%</div>
+
+  <div class="load-log" id="logBox">
+    <span class="log-line">» Iniciando sistema...<span class="log-cursor">_</span></span>
+  </div>
+
+  <div class="load-hearts">💜💜💜</div>
+</div>
+
+<!-- ══════════════════════════════
+     MAIN
+══════════════════════════════ -->
+<div class="stars" id="stars"></div>
+<div class="conf-layer" id="confetti"></div>
+
+<div id="main">
+  <div class="hdr">
+    <div class="ttl">¡FELIZ CUMPLEAÑOS<br>DIANA! 🎂</div>
+    <div class="sub">&gt; BTS RAP LINE SPECIAL EDITION &lt;</div>
+  </div>
+
+  <div class="cake-wrap">
+    <canvas id="cakeCanvas" width="160" height="144"></canvas>
+  </div>
+
+  <div class="mq-wrap">
+    <span class="mq">🎵 DIANA &nbsp;·&nbsp; 생일 축하해 &nbsp;·&nbsp; HAPPY BIRTHDAY &nbsp;·&nbsp; RM SAYS: BE YOURSELF &nbsp;·&nbsp; SUGA SAYS: STAY HEALTHY &nbsp;·&nbsp; J-HOPE: YOU ARE MY HOPE &nbsp;·&nbsp; ¡QUE LA ROMPAS! &nbsp;·&nbsp; NAMJOON APPROVES 💜 &nbsp;·&nbsp;</span>
+  </div>
+
+  <div class="sec-lbl">— RAP LINE WISHLIST FOR DIANA —</div>
+
+  <div class="grid">
+
+    <div class="card rm">
+      <span class="crown">👑</span>
+      <div class="cname">RM</div>
+      <div class="crname">KIM NAMJOON</div>
+      <canvas class="pixel-char" id="rmChar" width="64" height="80"></canvas>
+      <div class="badge">✦ FAVORITO ✦</div>
+      <div class="cmsg">
+        "Diana, en cada<br>
+        verso que escribo<br>
+        pienso en quienes<br>
+        sueñan con fuerza.<br>
+        Tú eres de esas.<br>
+        Feliz cumpleaños.<br><br>
+        — Namjoon 💜"
+      </div>
+      <span class="ctag">RAP MONSTER</span>
+    </div>
+
+    <div class="card sg">
+      <span class="crown" style="color:var(--cyan)">🎹</span>
+      <div class="cname">SUGA</div>
+      <div class="crname">MIN YOONGI</div>
+      <canvas class="pixel-char" id="sugaChar" width="64" height="80"></canvas>
+      <div class="cmsg">
+        "Otro año más,<br>
+        Diana. Descansa,<br>
+        trabaja duro<br>
+        y come bien.<br><br>
+        — Yoongi 🖤"
+      </div>
+      <span class="ctag">AGUST D</span>
+    </div>
+
+    <div class="card jh">
+      <span class="crown" style="color:var(--pink)">🌟</span>
+      <div class="cname">J-HOPE</div>
+      <div class="crname">JUNG HOSEOK</div>
+      <canvas class="pixel-char" id="jhopeChar" width="64" height="80"></canvas>
+      <div class="cmsg">
+        "DIANA!! 🎉<br>
+        ¡Eres la esperanza<br>
+        de este mundo!<br>
+        HOBI SAYS:<br>
+        ¡FELIZ DÍA!<br>
+        — Hoseok ❤️"
+      </div>
+      <span class="ctag">YOUR HOPE</span>
+    </div>
+
+  </div>
+
+  <div class="banner">
+    <div class="banner-txt">
+      ♫ &nbsp; DE LA RAP LINE CON AMOR &nbsp; ♫<br>
+      "La música que escuchas hoy fue<br>
+      hecha pensando en gente como tú."<br>
+      <span style="color:var(--gold);font-size:0.9em">— especialmente Namjoon 💜</span>
+    </div>
+  </div>
+
+  <div class="hearts">💜💜💜</div>
+
+  <div class="footer">
+    PIXEL ART BIRTHDAY CARD v2.0<br>
+    MADE WITH 💜 FOR DIANA<br>
+    BTS RAP LINE © HAPPY BIRTHDAY EDITION<br>
+    &gt; PRESS START TO CELEBRATE &lt;
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   SPRITE ANIMATION
+═══════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById('spriteCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const track = canvas.parentElement;
+  const P = 4;
+  let sx = 0, frame = 0;
+  let running = true;
+
+  function spr(f) {
+    ctx.clearRect(0, 0, 28, 40);
+    // hair
+    ctx.fillStyle = '#2d1a0a';
+    [[1,0],[2,0],[3,0],[4,0],[5,0],[0,1],[1,1],[2,1],[3,1],[4,1],[5,1],[6,1]].forEach(([x,y])=>ctx.fillRect(x*P,y*P,P,P));
+    // head
+    ctx.fillStyle = '#f5c5a3';
+    [[1,1],[2,1],[3,1],[4,1],[5,1],
+     [0,2],[1,2],[2,2],[3,2],[4,2],[5,2],[6,2],
+     [0,3],[1,3],[2,3],[3,3],[4,3],[5,3],[6,3],
+     [1,4],[2,4],[3,4],[4,4],[5,4]].forEach(([x,y])=>ctx.fillRect(x*P,y*P,P,P));
+    // eyes
+    ctx.fillStyle='#000';
+    ctx.fillRect(2*P,2*P,P,P); ctx.fillRect(4*P,2*P,P,P);
+    // smile
+    ctx.fillStyle='#d44';
+    ctx.fillRect(3*P,3*P,P,P/2);
+    // neck
+    ctx.fillStyle='#f5c5a3';
+    ctx.fillRect(3*P,5*P,P,P); ctx.fillRect(4*P,5*P,P,P);
+    // shirt purple
+    ctx.fillStyle='#7c3aed';
+    [[1,5],[2,5],[3,5],[4,5],[5,5],
+     [0,6],[1,6],[2,6],[3,6],[4,6],[5,6],[6,6],
+     [0,7],[1,7],[2,7],[3,7],[4,7],[5,7],[6,7]].forEach(([x,y])=>ctx.fillRect(x*P,y*P,P,P));
+    // gold accent
+    ctx.fillStyle='#fbbf24';
+    ctx.fillRect(3*P,5*P,P,P);
+    // legs (2 frames)
+    ctx.fillStyle='#1e3a5f';
+    if (f%4<2) {
+      [[1,8],[2,8],[3,8],[4,8],[5,8],[1,9],[2,9],[4,9],[5,9]].forEach(([x,y])=>ctx.fillRect(x*P,y*P,P,P));
+      ctx.fillStyle='#111'; ctx.fillRect(0*P,10*P,2*P,P); ctx.fillRect(4*P,10*P,2*P,P);
+    } else {
+      [[1,8],[2,8],[3,8],[4,8],[5,8],[2,9],[3,9],[4,9],[5,9]].forEach(([x,y])=>ctx.fillRect(x*P,y*P,P,P));
+      ctx.fillStyle='#111'; ctx.fillRect(1*P,10*P,2*P,P); ctx.fillRect(4*P,10*P,3*P,P);
+    }
+  }
+
+  function loop() {
+    if (!running) return;
+    const tw = track.clientWidth || 240;
+    sx = (sx + 1.4) % (tw + 28);
+    canvas.style.left = (sx - 28) + 'px';
+    spr(++frame);
+    requestAnimationFrame(loop);
+  }
+  spr(0);
+  requestAnimationFrame(loop);
+  window._stopSprite = () => { running = false; };
+})();
+
+/* ═══════════════════════════════════════
+   LOADING PROGRESS
+═══════════════════════════════════════ */
+const logs = [
+  '» Cargando Namjoon...',
+  '» Cargando Yoongi...',
+  '» Cargando Hoseok...',
+  '» Compilando rap bars...',
+  '» Preparando confetti...',
+  '» Activando cumpleaños...',
+  '» 💜 ¡TODO LISTO DIANA!',
+];
+const pbar = document.getElementById('pbar');
+const pctEl = document.getElementById('pct');
+const logBox = document.getElementById('logBox');
+let pct = 0, li = 0;
+
+function tick() {
+  pct = Math.min(100, pct + (Math.random() * 5 + 1.5));
+  pbar.style.width = pct + '%';
+  pctEl.textContent = Math.floor(pct) + '%';
+
+  const ni = Math.floor((pct / 100) * logs.length);
+  if (ni > li && ni <= logs.length) {
+    li = ni;
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = (logs[li-1] || logs[logs.length-1]) + (pct < 100 ? '<span class="log-cursor">_</span>' : '');
+    logBox.innerHTML = '';
+    logBox.appendChild(line);
+  }
+
+  if (pct < 100) {
+    setTimeout(tick, 70 + Math.random() * 110);
+  } else {
+    setTimeout(launch, 800);
+  }
+}
+setTimeout(tick, 350);
+
+function launch() {
+  window._stopSprite && window._stopSprite();
+  document.getElementById('loader').classList.add('gone');
+  document.getElementById('main').classList.add('show');
+  buildStars();
+  buildConfetti();
+  drawAll();
+}
+
+/* ═══════════════════════════════════════
+   STARS & CONFETTI
+═══════════════════════════════════════ */
+function buildStars() {
+  const sc = document.getElementById('stars');
+  for (let i = 0; i < 55; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${(Math.random()*3).toFixed(2)}s;animation-duration:${(1+Math.random()*2).toFixed(2)}s`;
+    if (Math.random()>.7) { s.style.width='6px'; s.style.height='6px'; }
+    sc.appendChild(s);
+  }
+}
+function buildConfetti() {
+  const cls = ['#7c3aed','#fbbf24','#f472b6','#22d3ee','#4ade80','#fff','#a855f7'];
+  const cc = document.getElementById('confetti');
+  for (let i = 0; i < 28; i++) {
+    const c = document.createElement('div');
+    c.className = 'conf';
+    c.style.cssText = `left:${Math.random()*100}%;background:${cls[i%cls.length]};animation-duration:${(4+Math.random()*6).toFixed(2)}s;animation-delay:${(Math.random()*8).toFixed(2)}s`;
+    if (Math.random()>.5) { c.style.width=c.style.height='5px'; }
+    cc.appendChild(c);
+  }
+}
+
+/* ═══════════════════════════════════════
+   PIXEL ART DRAWING
+═══════════════════════════════════════ */
+function drawCake() {
+  const cv = document.getElementById('cakeCanvas');
+  const ctx = cv.getContext('2d');
+  const px = 8;
+  ctx.imageSmoothingEnabled = false;
+  // plate
+  ctx.fillStyle='#555'; for(let x=1;x<=18;x++) ctx.fillRect(x*px,16*px,px,px);
+  ctx.fillStyle='#888'; for(let x=2;x<=17;x++) ctx.fillRect(x*px,15*px,px,px);
+  // bottom tier
+  ctx.fillStyle='#c084fc';
+  for(let y=9;y<=14;y++) for(let x=3;x<=16;x++) ctx.fillRect(x*px,y*px,px,px);
+  ctx.fillStyle='#e9d5ff'; for(let x=3;x<=16;x+=2) ctx.fillRect(x*px,9*px,px,px);
+  ctx.fillStyle='#7c3aed'; for(let x=4;x<=15;x+=2) ctx.fillRect(x*px,14*px,px,px);
+  // mid tier
+  ctx.fillStyle='#a855f7';
+  for(let y=5;y<=8;y++) for(let x=5;x<=14;x++) ctx.fillRect(x*px,y*px,px,px);
+  ctx.fillStyle='#ddd6fe'; for(let x=5;x<=14;x+=2) ctx.fillRect(x*px,5*px,px,px);
+  // top tier
+  ctx.fillStyle='#9333ea';
+  for(let y=2;y<=4;y++) for(let x=7;x<=12;x++) ctx.fillRect(x*px,y*px,px,px);
+  // candles
+  [{x:7,c:'#fbbf24'},{x:9,c:'#22d3ee'},{x:11,c:'#f472b6'}].forEach(({x,c})=>{
+    ctx.fillStyle=c; ctx.fillRect(x*px,0,px,2*px);
+    ctx.fillStyle='#fde68a'; ctx.fillRect(x*px+1,0,px-2,px-2);
+  });
+  // stars
+  ctx.fillStyle='#fbbf24';
+  [[5,11],[10,12],[15,11],[8,7],[12,7]].forEach(([x,y])=>ctx.fillRect(x*px,y*px,px,px));
+}
+
+function drawChar(id, o) {
+  const cv = document.getElementById(id);
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const px = 8;
+  ctx.imageSmoothingEnabled = false;
+  const {sk,hr,sh,pt,ac} = o;
+  ctx.fillStyle=hr;
+  [[3,0],[4,0],[5,0],[6,0],[7,0],[2,1],[3,1],[4,1],[5,1],[6,1],[7,1],[8,1]].forEach(([x,y])=>ctx.fillRect(x*px,y*px,px,px));
+  ctx.fillStyle=sk;
+  [[3,1],[4,1],[5,1],[6,1],[7,1],[2,2],[3,2],[4,2],[5,2],[6,2],[7,2],[8,2],
+   [2,3],[3,3],[4,3],[5,3],[6,3],[7,3],[8,3],[3,4],[4,4],[5,4],[6,4],[7,4]].forEach(([x,y])=>ctx.fillRect(x*px,y*px,px,px));
+  ctx.fillStyle='#000'; ctx.fillRect(4*px,2*px,px,px); ctx.fillRect(6*px,2*px,px,px);
+  ctx.fillStyle='#c44'; ctx.fillRect(5*px,3*px,px,px);
+  ctx.fillStyle=sk; ctx.fillRect(5*px,5*px,px,px); ctx.fillRect(6*px,5*px,px,px);
+  ctx.fillStyle=sh;
+  [[3,6],[4,6],[5,6],[6,6],[7,6],[8,6],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[8,7],[9,7],
+   [2,8],[3,8],[4,8],[5,8],[6,8],[7,8],[8,8],[9,8]].forEach(([x,y])=>ctx.fillRect(x*px,y*px,px,px));
+  ctx.fillStyle=ac; ctx.fillRect(5*px,6*px,px,px); ctx.fillRect(6*px,6*px,px,px);
+  ctx.fillStyle=sh;
+  [[1,6],[1,7],[1,8],[10,6],[10,7],[10,8]].forEach(([x,y])=>ctx.fillRect(x*px,y*px,px,px));
+  ctx.fillStyle=sk; ctx.fillRect(1*px,9*px,px,px); ctx.fillRect(10*px,9*px,px,px);
+  ctx.fillStyle=pt;
+  [[3,9],[4,9],[5,9],[6,9],[7,9],[8,9],[3,10],[4,10],[7,10],[8,10]].forEach(([x,y])=>ctx.fillRect(x*px,y*px,px,px));
+  ctx.fillStyle=ac; for(let x=3;x<=8;x++) ctx.fillRect(x*px,9*px,px,2);
+  ctx.fillStyle='#111';
+  [[2,11],[3,11],[4,11],[7,11],[8,11],[9,11]].forEach(([x,y])=>ctx.fillRect(x*px,y*px,px,px));
+}
+
+function drawAll() {
+  drawCake();
+  drawChar('rmChar',    {sk:'#f5c5a3',hr:'#2d1a0a',sh:'#7c3aed',pt:'#1e3a5f',ac:'#fbbf24'});
+  drawChar('sugaChar',  {sk:'#f5d0b0',hr:'#888',   sh:'#222',   pt:'#222',   ac:'#22d3ee'});
+  drawChar('jhopeChar', {sk:'#f5c090',hr:'#e8a020',sh:'#e05090',pt:'#2d5aee',ac:'#f472b6'});
+  // tiny crown above RM
+  const rc = document.getElementById('rmChar');
+  const rx = rc.getContext('2d');
+  rx.fillStyle='#fbbf24';
+  [[4,0],[5,0],[6,0],[7,0]].forEach(([x,y])=>rx.fillRect(x*8-2,y*8-4,6,6));
+}
+</script>
+</body>
+</html>
